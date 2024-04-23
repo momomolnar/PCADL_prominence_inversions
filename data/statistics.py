@@ -40,7 +40,7 @@ for el in range(PCA_dbase_coeff_flat.shape[0]):
     dbase_input_properties["var_" + format(el, '02d') + "_mean"] = np.mean(PCA_dbase_coeff_flat[el, :])
 
 
-output_indices = [0, 1, 2, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16]
+output_indices = [0, 1, 2, 5, 10, 11, 12, 15, 16]
 PCA_dbase_model_flat = PCA_dbase_model_flat[output_indices, :]
 
 
@@ -53,7 +53,7 @@ for el in range(PCA_dbase_model_flat.shape[0]):
     dbase_output_properties["var_" + format(el, '02d') + "_mean"] = np.mean(PCA_dbase_model_flat[el, :])
 
 # Save npy file
-output_path = '/glade/u/home/btremblay/PROPCA/laughing-happiness/'
+output_path = '/glade/u/home/mmolnar/Projects/PROPCA/laughing-happiness/'
 np.save(f"{output_path}dbase_input_properties.npy",
         dbase_input_properties)
 
