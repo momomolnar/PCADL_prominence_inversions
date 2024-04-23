@@ -11,7 +11,7 @@ def normalize(data, props_dict):
 
     for el in range(data.shape[1]):
         norm_data[:, el] = ((data[:, el] - props_dict.item()["var_" + format(el, '02d') + "_mean"])
-                            / props_dict.item()["var_" + format(el, '02d') + "_std"])
+                             / props_dict.item()["var_" + format(el, '02d') + "_std"])
 
     return norm_data
 

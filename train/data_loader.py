@@ -39,7 +39,7 @@ class PCADataModule(pl.LightningDataModule):
 
         for el in range(num_vars):
             norm_data[el, :] = ((data[el, :] - props_dict.item()["var_" + format(el, '02d') + "_mean"])
-                                 / props_dict.item()["var_" + format(el, '02d') + "_std"])
+                                  / props_dict.item()["var_" + format(el, '02d') + "_std"])
 
         return norm_data
 
@@ -67,7 +67,7 @@ class PCADataModule(pl.LightningDataModule):
         output_flat = PCA_dbase_model_all.reshape(PCA_dbase_model_all.shape[0] * PCA_dbase_model_all.shape[1],
                                                   PCA_dbase_model_all.shape[2])
 
-        output_indices = [0, 1, 2, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16]
+        output_indices = [0, 1, 2, 5, 10, 11, 12, 15, 16]
         output_flat = output_flat[output_indices, :]
 
         input_data_norm, output_data_norm = self.normalize_data(input_flat, output_flat)
