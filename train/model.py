@@ -81,10 +81,12 @@ class PCAModel(LightningModule):
 
         epsilon = sys.float_info.min
         rae = torch.abs((y - y_pred) / (torch.abs(y) + epsilon)) * 100
+        mae = torch.abs(y - y_pred)
 
         # Logging
         self.log("train_loss", loss, on_epoch=True, prog_bar=True, logger=True)
         self.log("train_RAE", rae.mean(), on_epoch=True, prog_bar=True, logger=True)
+        self.log("train_MAE", mae.mean(), on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_nb):
@@ -103,11 +105,14 @@ class PCAModel(LightningModule):
         # compute average cross-correlation
         cc = torch.tensor([torch.corrcoef(torch.stack([y[i], y_pred[i]]))[0, 1] for i in range(y.shape[0])]).mean()
         # mean absolute error
-        mae = torch.abs(y - y_pred).mean()
+        mae = torch.abs(y - y_pred)
+        av_mae = mae.mean()
+        av_mae_wl = mae.mean(0)
 
         # Logging
         self.log("valid_loss", loss, on_epoch=True, prog_bar=True, logger=True)
-        self.log("valid_MAE", mae, on_epoch=True, prog_bar=True, logger=True)
+        self.log("valid_MAE", av_mae, on_epoch=True, prog_bar=True, logger=True)
+        [self.log(f"valid_MAE_{i}", err, on_epoch=True, prog_bar=True, logger=True) for i, err in enumerate(av_mae_wl)]
         self.log("valid_RAE", av_rae, on_epoch=True, prog_bar=True, logger=True)
         [self.log(f"valid_RAE_{i}", err, on_epoch=True, prog_bar=True, logger=True) for i, err in enumerate(av_rae_wl)]
         self.log("valid_correlation_coefficient", cc, on_epoch=True, prog_bar=True, logger=True)
@@ -130,11 +135,14 @@ class PCAModel(LightningModule):
         # compute average cross-correlation
         cc = torch.tensor([torch.corrcoef(torch.stack([y[i], y_pred[i]]))[0, 1] for i in range(y.shape[0])]).mean()
         # mean absolute error
-        mae = torch.abs(y - y_pred).mean()
+        mae = torch.abs(y - y_pred)
+        av_mae = mae.mean()
+        av_mae_wl = mae.mean(0)
 
         # Logging
         self.log("valid_loss", loss, on_epoch=True, prog_bar=True, logger=True)
-        self.log("valid_MAE", mae, on_epoch=True, prog_bar=True, logger=True)
+        self.log("valid_MAE", av_mae, on_epoch=True, prog_bar=True, logger=True)
+        [self.log(f"valid_MAE_{i}", err, on_epoch=True, prog_bar=True, logger=True) for i, err in enumerate(av_mae_wl)]
         self.log("valid_RAE", av_rae, on_epoch=True, prog_bar=True, logger=True)
         [self.log(f"valid_RAE_{i}", err, on_epoch=True, prog_bar=True, logger=True) for i, err in enumerate(av_rae_wl)]
         self.log("valid_correlation_coefficient", cc, on_epoch=True, prog_bar=True, logger=True)
