@@ -11,7 +11,7 @@ def normalize(data, props_dict):
 
     for el in range(data.shape[1]):
         norm_data[:, el] = ((data[:, el] - props_dict.item()["var_" + format(el, '02d') + "_mean"])
-                             / props_dict.item()["var_" + format(el, '02d') + "_std"])
+                            / props_dict.item()["var_" + format(el, '02d') + "_std"])
 
     return norm_data
 
@@ -19,7 +19,10 @@ def normalize(data, props_dict):
 def unnormalize(data, props_dict):
     unnorm_data = torch.zeros_like(data)
 
-    for el in range(data.shape[1]):
+    print(f"unnorm_data shape: {unnorm_data.shape}")
+    for el in props_dict.item().keys():
+        print(el)
+    for el in range(5):
         unnorm_data[:, el] = ((data[:, el] * props_dict.item()["var_" + format(el, '02d') + "_std"])
                               + props_dict.item()["var_" + format(el, '02d') + "_mean"])
 
