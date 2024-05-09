@@ -14,6 +14,32 @@ import pickle
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.gridspec as gridspec
 
+def load_test_data_known(work_path, props_dict_input, props_dict_output, num_test=10000):
+    with open(work_path + 'MgIIhk_PCAdatabase.pickle', "rb") as f:
+        tdict = pickle.load(f)
+
+    PCA_dbase_coeff_all = tdict['PCA_dbase_coeff_all']
+    PCA_dbase_model_all = tdict['PCA_dbase_model_all']
+
+    input_flat = PCA_dbase_coeff_all.reshape(PCA_dbase_coeff_all.shape[0] * PCA_dbase_coeff_all.shape[1],
+                                             PCA_dbase_coeff_all.shape[2])
+
+    output_flat = PCA_dbase_model_all.reshape(PCA_dbase_model_all.shape[0] * PCA_dbase_model_all.shape[1],
+                                              PCA_dbase_model_all.shape[2])
+
+    test_input_data_norm = normalize(input_flat, props_dict_input)
+    test_output_data_norm = normalize(output_flat, props_dict_output)
+
+
+    test_input_data  = np.zeros((test_input_data_norm.shape[0]+2,
+                                 test_input_data_norm.shape[1]))
+
+    test_input_data[0, :] = test_output_data_norm[0, :]
+    test_input_data[1, :] = test_output_data_norm[5, :]
+    test_input_data[2:, :] = test_input_data_norm
+    test_input_data_flipped = torch.tensor(test_input_data.T)
+
+    return test_input_data_flipped[0:num_test, :], (output_flat.T)[0:num_test, :],
 
 def load_test_data(work_path, test_file,
                    props_dict_input, props_dict_output):
@@ -29,36 +55,35 @@ def load_test_data(work_path, test_file,
     with open(work_path + test_file, "rb") as f:
         tdict = pickle.load(f)
 
+    output_indices = [10, 11, 12, 15, 16]
+
     test_obs_model_all = tdict['obs_model_all']
     test_PCA_inv_model = tdict['inv_model_all']
 
     test_obs_C_IQUV_all = tdict['obs_C_IQUV_all']
     test_PCA_Stokes_inv = tdict['inv_C_IQUV_all']
 
-    test_input_data_norm = normalize(test_obs_C_IQUV_all, props_dict_input)
-    test_output_data_norm = normalize(test_obs_model_all, props_dict_output)
+    test_input_data = test_obs_C_IQUV_all
+    test_input_data = test_input_data.reshape(test_input_data.shape[0] * test_input_data.shape[1],
+                                              test_input_data.shape[2])
 
-    test_input_data_norm = test_input_data_norm.reshape(test_input_data_norm.shape[0] * test_input_data_norm.shape[1],
-                                                        test_input_data_norm.shape[2])
+    test_output_data = test_obs_model_all
+    test_output_data = test_output_data.reshape(test_output_data.shape[0] * test_output_data.shape[1],
+                                                test_output_data.shape[2])
 
-    test_output_data_norm = test_output_data_norm.reshape(test_output_data_norm.shape[0] * test_output_data_norm.shape[1],
-                                                          test_output_data_norm.shape[2])
+    test_input_data_norm = normalize(test_input_data, props_dict_input)
+    test_output_data_norm = normalize(test_output_data, props_dict_output)
 
-    print(f"Test input data norm: {test_input_data_norm.shape}")
-    print(f"Test output data norm: {test_output_data_norm.shape}")
 
-    output_indices = [10, 11, 12, 15, 16]
-
-    test_output_data = torch.tensor(test_output_data_norm[output_indices, :].T)
     test_input_data  = np.zeros((test_input_data_norm.shape[0]+2,
                                  test_input_data_norm.shape[1]))
 
     test_input_data[0, :] = test_output_data_norm[0, :]
-    test_input_data[1, :] = test_output_data_norm[1, :]
+    test_input_data[1, :] = test_output_data_norm[5, :]
     test_input_data[2:, :] = test_input_data_norm
-    test_input_data = torch.tensor(test_input_data.T)
+    test_input_data_flipped = torch.tensor(test_input_data.T)
 
-    return test_input_data, test_obs_model_all, test_PCA_inv_model, test_PCA_Stokes_inv
+    return test_input_data_flipped, test_obs_model_all, test_PCA_inv_model, test_PCA_Stokes_inv
 
 # Absolute errors
 def absolute_errors_scalar(v1, v2):
@@ -86,20 +111,21 @@ def cosine_similarity_vector(v1_x, v1_y, v2_x, v2_y):
 
 def normalize(data, props_dict):
     norm_data = np.zeros_like(data)
+    print(f"normalized data shape: {norm_data.shape}")
 
-    for el in range(data.shape[1]):
-        norm_data[:, el] = ((data[:, el] - props_dict.item()["var_" + format(el, '02d') + "_mean"])
+    for el in range(data.shape[0]):
+        norm_data[el, :] = ((data[el, :] - props_dict.item()["var_" + format(el, '02d') + "_mean"])
                             / props_dict.item()["var_" + format(el, '02d') + "_std"])
 
     return norm_data
 
 def unnormalize(data, props_dict):
     unnorm_data = torch.zeros_like(data)
+    output_indices = [10, 11, 12, 15, 16]
 
-    print(f"data shape: {data.shape}")
-    for el in range(data.shape[1]):
-        unnorm_data[:, el] = ((data[:, el] * props_dict.item()["var_" + format(el, '02d') + "_std"])
-                              + props_dict.item()["var_" + format(el, '02d') + "_mean"])
+    for el in range(unnorm_data.shape[0]):
+        unnorm_data[el, :] = ((data[el, :] * props_dict.item()["var_" + format(output_indices[el], '02d') + "_std"])
+                              + props_dict.item()["var_" + format(output_indices[el], '02d') + "_mean"])
 
     return unnorm_data
 
@@ -174,16 +200,15 @@ if __name__ == "__main__":
 
     # load data properties
     output_props_dict = args.output_props_dict
-    input_dict        = args.input_props_dict
-    test_data_file    = args.test_file
+    input_props_dict = args.input_props_dict
+    test_data_file = args.test_file
 
-    input_props  = np.load(data_path + output_props_dict, allow_pickle=True)
+    input_props  = np.load(data_path + input_props_dict, allow_pickle=True)
     output_props = np.load(data_path + output_props_dict, allow_pickle=True)
 
-    test_input_data, output_test_data, test_PCA_inv_model, test_PCA_Stokes_inv = load_test_data(data_path,
-                                                                                                test_data_file,
-                                                                                                input_props,
-                                                                                                output_props)
+    test_input_data, output_test_data, test_PCA_inv_model, test_PCA_Stokes_inv = load_test_data(data_path, test_data_file, input_props, output_props)
+
+    # test_input_data, output_test_data = load_test_data_known(data_path, input_props, output_props)
 
     # normalize the data
 
@@ -198,15 +223,91 @@ if __name__ == "__main__":
 
     #print(f"shape of test_NN_inversions: {output_test_data.shape}")
     #print(f"shape of  output_test_data: {test_PCA_inv_model.shape}")
-    plt.scatter(test_NN_inversions[:, 0], output_test_data[2, 0, :])
-    plt.scatter(test_PCA_inv_model[2, 0, :], output_test_data[2, 0, :])
-    plt.xlim(0, 100)
-    plt.ylim(0, 100)
-    plt.savefig(result_path + "test_1.png")
+    # plt.hist2d(output_test_data[2, 0, :], test_NN_inversions[:, 0],
+    #            range=[[-10, 1000], [-10, 1000]], bins=100, vmin=0, vmax=10)
+    plt.plot(output_test_data[2, 0, :], test_NN_inversions[:, 0], 'r.', alpha=0.3)
+    plt.xlabel("Input Bfield [G]")
+    plt.ylabel("NN inferred Bfield [G]")
+    plt.title("NN inferred magnetic field")
+    line = np.linspace(1, 100)
+    plt.plot(line, line, 'b--')
+    plt.xlim(1e0, 1e3)
+    plt.ylim(1e0, 1e3)
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.savefig(result_path + "test_B_field_NN.png")
+    plt.clf()
+
+    plt.plot(output_test_data[2, 1, :], test_NN_inversions[:, 1], 'r.', alpha=0.3)
+    line = np.linspace(0, 180)
+    plt.plot(line, line, 'b--')
+    plt.xlabel("Input theta [rad]")
+    plt.ylabel("NN inferred theta [rad]")
+    plt.title("NN inferred magnetic field inclination")
+    plt.savefig(result_path + "test_theta_field_NN.png")
+    # plt.yscale("log")
+    # plt.xscale("log")
+    plt.clf()
+
+    plt.plot(output_test_data[2, 2, :], test_NN_inversions[:, 1], 'r.', alpha=0.3)
+    plt.xlabel("Input phi [rad]")
+    plt.ylabel("NN inferred phi [rad]")
+    plt.title("NN inferred magnetic field azimuth")
+    plt.savefig(result_path + "test_phi_field_NN.png")
+    # plt.yscale("log")
+    # plt.xscale("log")
     plt.show()
     plt.clf()
 
-    plt.hist(test_NN_inversions[:, 0], bins=100, density=True,
-             range=(0, 100))
-    plt.xlim(0, 100)
-    plt.savefig(result_path + "histogram_NN_inversion.png")
+
+    plt.plot(test_PCA_inv_model[0, 0, :], output_test_data[0, 0, :], 'r.')
+    plt.xlabel("Input h")
+    plt.ylabel("PCA inferred h")
+    plt.title("PCA inferred h")
+    plt.savefig(result_path + "test_h_field_PCA.png")
+
+    plt.show()
+    plt.clf()
+    # #
+    #
+    plt.plot(test_PCA_inv_model[2, 0, :], output_test_data[2, 0, :], 'r.')
+    plt.xlabel("Input B")
+    plt.ylabel("PCA inferred B")
+    plt.title("PCA inferred B")
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.savefig(result_path + "test_B_field_PCA.png")
+
+    plt.show()
+    plt.clf()
+
+    plt.plot(test_PCA_inv_model[2, 1, :], output_test_data[2, 1, :], 'r.')
+    plt.xlabel("Input B")
+    plt.ylabel("PCA inferred theta [rad]")
+    plt.title("PCA inferred theta [rad]")
+    plt.savefig(result_path + "test_theta_field_PCA.png")
+
+    # plt.yscale("log")
+    # plt.xscale("log")
+    plt.clf()
+
+    plt.plot(test_PCA_inv_model[2, 2, :], output_test_data[2, 2, :], 'r.')
+    plt.xlabel("Input B")
+    plt.ylabel("PCA inferred phi [rad]")
+    plt.title("PCA inferred phi [rad]")
+    plt.savefig(result_path + "test_phi_field_PCA.png")
+
+    # plt.yscale("log")
+    # plt.xscale("log")
+    plt.clf()
+    #
+    # # plt.hist2d(test_PCA_inv_model[0, 0, :], output_test_data[0, 0, :],
+    # #            bins=100, vmin=0, vmax=10)
+    # plt.plot(test_PCA_inv_model[0, 0, :], output_test_data[0, 0, :], 'r.')
+    # plt.savefig(result_path + "test_h_field_PCA.png")
+    # plt.show()
+    # plt.clf()
+    #
+    plt.hist(test_NN_inversions[:, 0], bins=100, range=[0, 100])
+    plt.savefig(result_path + "hist_NN_Bfield.png")
+    plt.clf()

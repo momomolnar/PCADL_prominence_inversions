@@ -40,8 +40,8 @@ for el in range(PCA_dbase_coeff_flat.shape[0]):
     dbase_input_properties["var_" + format(el, '02d') + "_mean"] = np.mean(PCA_dbase_coeff_flat[el, :])
 
 
-output_indices = [10, 11, 12, 15, 16]
-PCA_dbase_model_flat = PCA_dbase_model_flat[output_indices, :]
+# output_indices = [10, 11, 12, 15, 16]
+PCA_dbase_model_flat = PCA_dbase_model_flat
 
 
 for el in range(PCA_dbase_model_flat.shape[0]):

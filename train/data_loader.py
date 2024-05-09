@@ -61,16 +61,32 @@ class PCADataModule(pl.LightningDataModule):
         PCA_dbase_coeff_all = tdict['PCA_dbase_coeff_all']
         PCA_dbase_model_all = tdict['PCA_dbase_model_all']
 
+
+
         input_flat = PCA_dbase_coeff_all.reshape(PCA_dbase_coeff_all.shape[0] * PCA_dbase_coeff_all.shape[1],
                                                  PCA_dbase_coeff_all.shape[2])
 
         output_flat = PCA_dbase_model_all.reshape(PCA_dbase_model_all.shape[0] * PCA_dbase_model_all.shape[1],
                                                   PCA_dbase_model_all.shape[2])
 
-        output_indices = [0, 1, 2, 5, 10, 11, 12, 15, 16]
-        output_flat = output_flat[output_indices, :]
+        input_flat = input_flat[:, 10000:]
+        output_flat = output_flat[:, 10000:]
 
         input_data_norm, output_data_norm = self.normalize_data(input_flat, output_flat)
+
+        output_indices = [10, 11, 12, 15, 16]
+        output_data_final = output_data_norm[output_indices, :]
+
+        extra_parameters = 2 # height, theta, phi
+
+        input_data_norm_new = np.zeros((input_data_norm.shape[0]+extra_parameters,
+                                        input_data_norm.shape[1]))
+
+        input_data_norm_new[0, :] = output_data_norm[0, :]
+        input_data_norm_new[1, :] = output_data_norm[5, :]
+        input_data_norm_new[2:, :] = input_data_norm
+        input_data_norm = input_data_norm_new
+        print(input_data_norm.shape)
 
         generator1 = torch.Generator().manual_seed(42)
         # ind = random_split(indices, [self.nb_train, self.nb_val, self.nb_test],
@@ -90,7 +106,7 @@ class PCADataModule(pl.LightningDataModule):
         # self.train_ds = self.datafn(train_ds_input, train_ds_output)
         # self.valid_ds = self.datafn(valid_ds_input, valid_ds_output)
         # self.test_ds  = self.datafn(test_ds_input, test_ds_output)
-        self.dataset = dataFn(input_data_norm.T, output_data_norm.T)
+        self.dataset = dataFn(input_data_norm.T, output_data_final.T)
         # print(input_data_norm.shape(), output_data_norm.shape())
 
     def train_dataloader(self):

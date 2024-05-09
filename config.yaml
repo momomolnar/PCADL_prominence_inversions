@@ -1,10 +1,10 @@
 # Model
 seed: 42  # Seed for reproducibility
-n_input: 40  # Number of input features
-n_output: 9  # Number of output features
+n_input: 42  # Number of input features
+n_output: 5  # Number of output features
 n_hidden_layers: 8
 n_hidden_neurons: 256
-max_epochs: 100  # Maximum number of epochs
+max_epochs: 200 # Maximum number of epochs
 lr: 1.e-4
 
 # Training logging
@@ -14,4 +14,5 @@ wandb:
   group: 'Development'  # Name of wandb group
   job_type: 'Training'  # Nme of wandb job_type
   tags: ['development'] # Run tags
+  _service_wait: '300'
   notes: "Mapping function."

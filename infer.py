@@ -27,6 +27,7 @@ def ipredict(model, dataset, return_inputs=False, batch_size=2, num_workers = No
     with torch.no_grad():
         for imgs in loader:
             imgs = imgs.to(model.device)
+            # pred_irradiance = imgs
             pred_irradiance = model.forward_unnormalize(imgs)
             for pred, img in zip(pred_irradiance, imgs):
                 if return_inputs:
